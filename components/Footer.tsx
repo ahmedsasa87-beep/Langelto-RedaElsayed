@@ -1,21 +1,24 @@
 
 import React from 'react';
 import { Phone, MapPin, Instagram, Facebook, MessageCircle, Heart } from 'lucide-react';
+import { useApp } from '../AppContext';
 import { APP_CONFIG } from '../constants';
 
 const Footer: React.FC = () => {
+  const { settings } = useApp();
+
   return (
     <footer className="bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 pt-16 pb-24 md:pb-12 mt-12 transition-colors">
       <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-3 gap-12 text-center md:text-right">
         <div className="space-y-6">
           <div className="flex items-center justify-center md:justify-start gap-3">
              <img 
-                src="https://i.ibb.co/L5k6jYF/logo.jpg" 
+                src={settings.logoUrl} 
                 alt="Logo" 
-                className="w-12 h-12 rounded-full border-2 border-red-600"
+                className="w-12 h-12 rounded-full border-2 border-red-600 object-contain bg-white"
                 onError={(e) => { (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=L&background=e11d48&color=fff'; }}
               />
-              <h4 className="text-2xl font-black text-red-600">لانجولتو</h4>
+              <h4 className="text-2xl font-black text-red-600">{settings.restaurantName}</h4>
           </div>
           <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed max-w-sm mx-auto md:mx-0">
             أفضل تجربة لتناول البيتزا والكريب في المنطقة. نستخدم أجود أنواع الدقيق والموتزاريلا الطبيعية 100% لنضمن لك طعماً لا ينسى.
@@ -29,7 +32,7 @@ const Footer: React.FC = () => {
               <div className="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl group-hover:bg-red-600 group-hover:text-white transition-all">
                 <Phone size={18} />
               </div>
-              <span className="font-bold">{APP_CONFIG.whatsappNumber}</span>
+              <span className="font-bold">{settings.phone}</span>
             </li>
             <li className="flex items-center justify-center md:justify-start gap-3 group">
               <div className="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl group-hover:bg-red-600 group-hover:text-white transition-all">
@@ -41,7 +44,7 @@ const Footer: React.FC = () => {
               <div className="p-2 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-xl group-hover:bg-red-600 group-hover:text-white transition-all">
                 <MessageCircle size={18} />
               </div>
-              <span className="font-bold">{APP_CONFIG.workingHours}</span>
+              <span className="font-bold">{settings.workingHours}</span>
             </li>
           </ul>
         </div>
@@ -51,7 +54,7 @@ const Footer: React.FC = () => {
           <div className="flex justify-center md:justify-start gap-4">
             <SocialLink icon={<Facebook size={20} />} color="bg-blue-50 text-blue-600" hover="hover:bg-blue-600" />
             <SocialLink icon={<Instagram size={20} />} color="bg-pink-50 text-pink-600" hover="hover:bg-pink-600" />
-            <a href={`https://wa.me/20${APP_CONFIG.whatsappNumber}`} className="p-4 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-2xl hover:bg-green-600 hover:text-white transition-all transform hover:-translate-y-1 shadow-sm">
+            <a href={`https://wa.me/20${settings.phone}`} className="p-4 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-2xl hover:bg-green-600 hover:text-white transition-all transform hover:-translate-y-1 shadow-sm">
               <MessageCircle size={20} />
             </a>
           </div>

@@ -26,15 +26,13 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'l-angoletto-permanent-data-v2';
+const STORAGE_KEY = 'l-angoletto-permanent-data-v3';
 
-// دالة مساعدة لاستعادة البيانات بشكل آمن ومباشر
 const loadInitialState = () => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? JSON.parse(saved) : {};
   } catch (e) {
-    console.error("Storage error", e);
     return {};
   }
 };
@@ -63,6 +61,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     musicUrl: '',
     tickerTexts: ['عروض خاصة على البيتزا الكبيرة!', 'جرب كريب لانجولتو المميز الآن', 'خصم 10% لأول طلب من التطبيق'],
     isMusicPlaying: false,
+    logoUrl: 'https://i.ibb.co/L5k6jYF/logo.jpg',
   });
 
   const [darkMode, setDarkMode] = useState(() => {
@@ -70,13 +69,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
   });
 
-  // تحديث الـ Class الخاص بالوضع الليلي فورياً
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
   }, [darkMode]);
 
-  // دالة الحفظ المركزية: يتم استدعاؤها عند أي تغيير في الحالات الأساسية
   useEffect(() => {
     const data = { menu, orders, settings, reviews, currentUser };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));

@@ -2,7 +2,9 @@
 export enum CategoryType {
   PIZZA = 'بيتزا',
   CREPE = 'كريب',
-  SANDWICH = 'سندوتشات',
+  SANDWICH_CHICKEN = 'سندوتشات فراخ',
+  SANDWICH_MEAT = 'سندوتشات لحمه',
+  ADDONS = 'إضافات',
   OFFERS = 'عروض',
   DRINKS = 'مشروبات'
 }
@@ -12,10 +14,10 @@ export interface MenuItem {
   name: string;
   category: string;
   description?: string;
-  priceS?: number; // For Pizza Small / Crepe Triangle
-  priceM?: number; // For Pizza Medium / Crepe Roll
-  priceL?: number; // For Pizza Large
-  priceDefault?: number; // For items with single price
+  priceS?: number; // Pizza S / Crepe Triangle
+  priceM?: number; // Pizza M / Crepe Roll
+  priceL?: number; // Pizza L
+  priceDefault?: number; // Sandwiches / Addons
   ingredients?: string[];
   image?: string;
 }
@@ -71,6 +73,7 @@ export interface AppSettings {
   musicUrl: string;
   tickerTexts: string[];
   isMusicPlaying: boolean;
+  logoUrl: string;
 }
 
 export interface Review {

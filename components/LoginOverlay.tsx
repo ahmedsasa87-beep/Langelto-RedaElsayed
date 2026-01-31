@@ -4,7 +4,7 @@ import { useApp } from '../AppContext';
 import { User } from '../types';
 
 const LoginOverlay: React.FC = () => {
-  const { setCurrentUser } = useApp();
+  const { setCurrentUser, settings } = useApp();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -42,8 +42,13 @@ const LoginOverlay: React.FC = () => {
     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
       <div className="bg-white dark:bg-slate-800 w-full max-w-md rounded-3xl p-8 space-y-6 animate-in slide-in-from-bottom-10 duration-500">
         <div className="text-center space-y-2">
-          <img src="https://i.ibb.co/L5k6jYF/logo.jpg" alt="Logo" className="w-20 h-20 rounded-full mx-auto border-4 border-red-600" />
-          <h2 className="text-3xl font-black">مرحباً بك في لانجولتو</h2>
+          <img 
+            src={settings.logoUrl} 
+            alt="Logo" 
+            className="w-20 h-20 rounded-full mx-auto border-4 border-red-600 bg-white object-contain" 
+            onError={(e) => { (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=L&background=e11d48&color=fff'; }}
+          />
+          <h2 className="text-3xl font-black">مرحباً بك في {settings.restaurantName}</h2>
           <p className="text-gray-500">سجل بياناتك لتبدأ في طلب وجباتك المفضلة</p>
         </div>
 

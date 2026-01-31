@@ -15,7 +15,7 @@ const MenuView: React.FC = () => {
   const filteredMenu = menu.filter(item => item.category === selectedCategory);
 
   const handleAddToCart = (item: MenuItem) => {
-    // If it's pizza or crepe, we need a size modal
+    // Pizza and Crepe need size selection
     if (item.category === CategoryType.PIZZA || item.category === CategoryType.CREPE) {
       setAddingItem(item);
       setSelectedSize(item.category === CategoryType.PIZZA ? 'M' : 'S');
@@ -23,6 +23,7 @@ const MenuView: React.FC = () => {
       return;
     }
 
+    // Sandwiches and Addons are direct buy
     addToCart({
       id: Math.random().toString(36).substr(2, 9),
       menuItemId: item.id,
@@ -39,16 +40,23 @@ const MenuView: React.FC = () => {
     if (!addingItem) return;
     
     let price = 0;
-    if (selectedSize === 'S') price = addingItem.priceS || 0;
-    else if (selectedSize === 'M') price = addingItem.priceM || 0;
-    else if (selectedSize === 'L') price = addingItem.priceL || 0;
+    let sizeName = '';
+
+    if (addingItem.category === CategoryType.CREPE) {
+      if (selectedSize === 'S') { price = addingItem.priceS || 0; sizeName = 'مثلث'; }
+      else { price = addingItem.priceM || 0; sizeName = 'رول'; }
+    } else {
+      if (selectedSize === 'S') { price = addingItem.priceS || 0; sizeName = 'صغير'; }
+      else if (selectedSize === 'M') { price = addingItem.priceM || 0; sizeName = 'وسط'; }
+      else if (selectedSize === 'L') { price = addingItem.priceL || 0; sizeName = 'كبير'; }
+    }
 
     const finalPrice = withCrust ? price + settings.crustStuffingPrice : price;
 
     addToCart({
       id: Math.random().toString(36).substr(2, 9),
       menuItemId: addingItem.id,
-      name: `${addingItem.name} (${selectedSize === 'S' ? 'صغير' : selectedSize === 'M' ? 'وسط' : 'كبير'})`,
+      name: `${addingItem.name} (${sizeName})`,
       size: selectedSize,
       price: finalPrice,
       quantity: 1,
@@ -120,14 +128,14 @@ const MenuView: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <label className="text-sm font-bold text-gray-500">اختر الحجم:</label>
+              <label className="text-sm font-bold text-gray-500">اختر {addingItem.category === CategoryType.CREPE ? 'النوع:' : 'الحجم:'}</label>
               <div className="grid grid-cols-3 gap-3">
                 {addingItem.priceS && (
                   <button 
                     onClick={() => setSelectedSize('S')}
                     className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-1 ${selectedSize === 'S' ? 'border-red-600 bg-red-50 dark:bg-red-900/20' : 'border-gray-100 dark:border-slate-700'}`}
                   >
-                    <span className="font-bold">صغير</span>
+                    <span className="font-bold">{addingItem.category === CategoryType.CREPE ? 'مثلث' : 'صغير'}</span>
                     <span className="text-sm">{addingItem.priceS} ج.م</span>
                   </button>
                 )}
@@ -136,7 +144,7 @@ const MenuView: React.FC = () => {
                     onClick={() => setSelectedSize('M')}
                     className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-1 ${selectedSize === 'M' ? 'border-red-600 bg-red-50 dark:bg-red-900/20' : 'border-gray-100 dark:border-slate-700'}`}
                   >
-                    <span className="font-bold">وسط</span>
+                    <span className="font-bold">{addingItem.category === CategoryType.CREPE ? 'رول' : 'وسط'}</span>
                     <span className="text-sm">{addingItem.priceM} ج.م</span>
                   </button>
                 )}

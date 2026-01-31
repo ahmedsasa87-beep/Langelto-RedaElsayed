@@ -13,7 +13,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
-  const { darkMode, toggleDarkMode, currentUser, cart } = useApp();
+  const { darkMode, toggleDarkMode, currentUser, cart, settings } = useApp();
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800">
@@ -22,17 +22,16 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('home')}>
             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-red-600 bg-white flex items-center justify-center shadow-sm">
               <img 
-                src="https://i.ibb.co/L5k6jYF/logo.jpg" 
+                src={settings.logoUrl} 
                 alt="Logo" 
                 className="w-full h-full object-cover"
                 onError={(e) => { 
-                  // Fallback if the image fails
                   (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=L&background=e11d48&color=fff'; 
                 }}
               />
             </div>
             <h1 className="text-xl font-bold bg-gradient-to-l from-red-600 to-orange-500 bg-clip-text text-transparent hidden sm:block">
-              لانجولتو
+              {settings.restaurantName}
             </h1>
           </div>
         </div>
@@ -45,7 +44,6 @@ const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
         </nav>
 
         <div className="flex items-center gap-3">
-          {/* Dedicated Admin Entry Button */}
           <button 
             onClick={() => setActiveTab('admin')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-xs font-bold border ${
