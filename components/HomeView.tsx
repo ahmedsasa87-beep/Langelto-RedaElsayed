@@ -27,23 +27,37 @@ const HomeView: React.FC<HomeViewProps> = ({ onOrderNow, onOpenComps }) => {
     }
   };
 
+  // Improved extraction for all YouTube URL types
+  const getYoutubeId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  const videoId = getYoutubeId(settings.videoUrl) || 'G-GO2-j71JY';
+
   return (
     <div className="space-y-16 animate-in fade-in duration-700 pb-12">
-      {/* Hero Section with Video */}
-      <section className="relative h-[450px] md:h-[600px] rounded-[40px] overflow-hidden shadow-2xl group">
-        <iframe 
-          className="absolute inset-0 w-full h-full object-cover scale-105"
-          src={`${settings.videoUrl}?autoplay=1&mute=1&loop=1&controls=0&modestbranding=1&playlist=${settings.videoUrl.split('/').pop()}`}
-          title="Restaurant Video"
-          allow="autoplay; encrypted-media"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col items-center justify-center text-center p-6 space-y-6">
-          <div className="bg-red-600/20 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 text-white text-sm font-bold animate-bounce">
+      {/* Hero Section with Video - Fixed Video Playback */}
+      <section className="relative h-[450px] md:h-[600px] rounded-[40px] overflow-hidden shadow-2xl group bg-slate-900">
+        <div className="absolute inset-0 z-0">
+          <iframe 
+            className="w-full h-full object-cover scale-110 pointer-events-none"
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0&iv_load_policy=3&enablejsapi=1`}
+            title="Restaurant Video"
+            allow="autoplay; encrypted-media; fullscreen"
+            frameBorder="0"
+          />
+        </div>
+        
+        {/* Overlay Content */}
+        <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col items-center justify-center text-center p-6 space-y-6">
+          <div className="bg-red-600/20 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 text-white text-sm font-bold animate-pulse">
              🍕 أطعم بيتزا وكريب في كفر بهيدة 🍕
           </div>
-          <h2 className="text-5xl md:text-8xl font-black text-white drop-shadow-2xl mb-2 tracking-tight">لانجولتو</h2>
+          <h2 className="text-6xl md:text-9xl font-black text-white drop-shadow-2xl mb-2 tracking-tight">لانجولتو</h2>
           <p className="text-xl md:text-3xl text-gray-200 max-w-2xl font-light drop-shadow-lg">
-            إدارة رضا البغدي.. المذاق اللي بتدور عليه
+            إدارة رضا البغدي.. الطعم الأصلي للبيتزا والكريب
           </p>
           <div className="flex flex-wrap justify-center gap-4 mt-8">
             <button 
@@ -71,9 +85,9 @@ const HomeView: React.FC<HomeViewProps> = ({ onOrderNow, onOpenComps }) => {
         <div className="flex justify-between items-center mb-10">
           <div>
             <h3 className="text-3xl font-black border-r-4 border-red-600 pr-4">أقسام المطعم</h3>
-            <p className="text-gray-500 text-sm mt-1">اختار وجبتك المفضلة من المنيو بتاعنا</p>
+            <p className="text-gray-500 text-sm mt-1 font-bold">اختار وجبتك المفضلة من المنيو بتاعنا</p>
           </div>
-          <button onClick={onOrderNow} className="text-red-600 font-bold flex items-center gap-1 hover:translate-x-[-4px] transition-transform">
+          <button onClick={onOrderNow} className="text-red-600 font-black flex items-center gap-1 hover:translate-x-[-4px] transition-transform">
             كل الأصناف <ChevronLeft size={20} />
           </button>
         </div>
@@ -96,18 +110,18 @@ const HomeView: React.FC<HomeViewProps> = ({ onOrderNow, onOpenComps }) => {
             <div className="inline-flex items-center gap-2 bg-white/10 px-4 py-1 rounded-full text-xs font-bold border border-white/10">
               <Star className="text-yellow-400 fill-yellow-400" size={14} /> برنامج الولاء
             </div>
-            <h3 className="text-4xl md:text-5xl font-black">اطلب وجباتك.. وجمع نقاطك!</h3>
+            <h3 className="text-4xl md:text-5xl font-black text-white">اطلب وجباتك.. وجمع نقاطك!</h3>
             <p className="text-gray-400 text-lg leading-relaxed">
               كل 100 جنيه بتطلبها بترجعلك بـ 1 نقطة. والنقاط دي تقدر تستبدلها بوجبات مجانية أو خصومات حصرية.
             </p>
             <div className="flex flex-wrap justify-center md:justify-start gap-4">
                <div className="bg-white/5 p-4 rounded-3xl border border-white/5 text-center min-w-[120px]">
                   <div className="text-2xl font-black text-red-500">{currentUser?.points || 0}</div>
-                  <div className="text-[10px] text-gray-500">نقاطك الحالية</div>
+                  <div className="text-[10px] text-gray-500 font-bold">نقاطك الحالية</div>
                </div>
                <div className="bg-white/5 p-4 rounded-3xl border border-white/5 text-center min-w-[120px]">
                   <div className="text-2xl font-black text-green-500">100</div>
-                  <div className="text-[10px] text-gray-500">للحصول على هدية</div>
+                  <div className="text-[10px] text-gray-500 font-bold">للحصول على هدية</div>
                </div>
             </div>
           </div>
@@ -117,7 +131,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onOrderNow, onOpenComps }) => {
                 <div className="space-y-3">
                    {[1, 2, 3].map(i => (
                      <div key={i} className="flex items-center gap-3 bg-white/5 p-3 rounded-2xl">
-                        <img src={`https://i.pravatar.cc/150?u=${i}`} className="w-10 h-10 rounded-full border-2 border-red-500" />
+                        <img src={`https://i.pravatar.cc/150?u=${i}`} className="w-10 h-10 rounded-full border-2 border-red-500" alt="Avatar" />
                         <div className="flex-1">
                           <div className="text-xs font-bold">عميل مميز #{i}</div>
                           <div className="w-full bg-white/10 h-1.5 rounded-full mt-1">
@@ -137,7 +151,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onOrderNow, onOpenComps }) => {
       <section>
         <div className="text-center space-y-2 mb-12">
           <h3 className="text-3xl font-black">آراء عملائنا</h3>
-          <p className="text-gray-500">اللي جرب لانجولتو مبيقدرش يقاوم</p>
+          <p className="text-gray-500 font-medium">اللي جرب لانجولتو مبيقدرش يقاوم</p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {reviews.slice(0, 6).map((review) => (
@@ -149,7 +163,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onOrderNow, onOpenComps }) => {
                   </div>
                   <div>
                     <h4 className="font-bold">{review.userName}</h4>
-                    <span className="text-[10px] text-gray-400">{review.date}</span>
+                    <span className="text-[10px] text-gray-400 font-bold">{review.date}</span>
                   </div>
                 </div>
                 <div className="flex gap-0.5">
@@ -173,11 +187,11 @@ const HomeView: React.FC<HomeViewProps> = ({ onOrderNow, onOpenComps }) => {
                     <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><MessageCircle size={18} /></div>
                     <span className="font-bold">دردشة لانجولتو</span>
                  </div>
-                 <button onClick={() => setIsChatOpen(false)} className="hover:bg-white/10 p-1 rounded-full"><ChevronRight size={20} className="rotate-90" /></button>
+                 <button onClick={() => setIsChatOpen(false)} className="hover:bg-white/10 p-1 rounded-full transition-colors"><ChevronRight size={20} className="rotate-90" /></button>
               </div>
               <div className="flex-1 p-4 space-y-4 overflow-y-auto text-xs">
-                 <div className="bg-gray-100 dark:bg-slate-800 p-3 rounded-2xl rounded-tr-none ml-4">
-                    أهلاً بك يا {currentUser?.name}! كيف يمكننا مساعدتك اليوم؟
+                 <div className="bg-gray-100 dark:bg-slate-800 p-3 rounded-2xl rounded-tr-none ml-4 font-bold">
+                    أهلاً بك يا {currentUser?.name || 'زائر'}! كيف يمكننا مساعدتك اليوم؟
                  </div>
               </div>
               <div className="p-3 bg-gray-50 dark:bg-slate-800 flex items-center gap-2 border-t dark:border-slate-700">
@@ -185,18 +199,18 @@ const HomeView: React.FC<HomeViewProps> = ({ onOrderNow, onOpenComps }) => {
                  <input 
                     value={chatMsg}
                     onChange={(e) => setChatMsg(e.target.value)}
-                    className="flex-1 bg-white dark:bg-slate-900 p-2 rounded-xl text-xs border-none focus:ring-1 focus:ring-red-600" 
+                    className="flex-1 bg-white dark:bg-slate-900 p-2 rounded-xl text-xs border-none focus:ring-1 focus:ring-red-600 font-bold" 
                     placeholder="اكتب رسالتك..."
                   />
-                 <button className="text-red-600"><Send size={20} /></button>
+                 <button className="text-red-600 hover:scale-110 transition-transform"><Send size={20} /></button>
               </div>
            </div>
          ) : (
            <button 
              onClick={() => setIsChatOpen(true)}
-             className="w-16 h-16 bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl shadow-red-600/40 transform transition-all hover:scale-110 active:scale-95"
+             className="w-16 h-16 bg-red-600 text-white rounded-full flex items-center justify-center shadow-2xl shadow-red-600/40 transform transition-all hover:scale-110 active:scale-95 group"
            >
-             <MessageCircle size={32} />
+             <MessageCircle size={32} className="group-hover:rotate-12 transition-transform" />
              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse" />
            </button>
          )}

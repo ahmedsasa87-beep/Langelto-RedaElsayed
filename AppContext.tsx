@@ -1,6 +1,6 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { MenuItem, CartItem, User, Order, AppSettings, Review, CategoryType } from './types';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { MenuItem, CartItem, User, Order, AppSettings, Review } from './types';
 import { INITIAL_MENU, APP_CONFIG } from './constants';
 
 interface AppContextType {
@@ -26,70 +26,77 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'l-angoletto-data-v1';
+const STORAGE_KEY = 'l-angoletto-permanent-data-v2';
+
+// دالة مساعدة لاستعادة البيانات بشكل آمن ومباشر
+const loadInitialState = () => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : {};
+  } catch (e) {
+    console.error("Storage error", e);
+    return {};
+  }
+};
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [menu, setMenu] = useState<MenuItem[]>(INITIAL_MENU);
+  const saved = loadInitialState();
+
+  const [menu, setMenu] = useState<MenuItem[]>(saved.menu || INITIAL_MENU);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [darkMode, setDarkMode] = useState(false);
-  const [reviews, setReviews] = useState<Review[]>([
+  const [currentUser, setCurrentUser] = useState<User | null>(saved.currentUser || null);
+  const [orders, setOrders] = useState<Order[]>(saved.orders || []);
+  const [reviews, setReviews] = useState<Review[]>(saved.reviews || [
     { id: 'r1', userName: 'أحمد علي', rating: 5, comment: 'أفضل بيتزا في كفر بهيدة!', date: '2023-10-01' },
     { id: 'r2', userName: 'سارة محمد', rating: 4, comment: 'الكريب طعمه رائع والتوصيل سريع.', date: '2023-10-05' },
   ]);
 
-  const [settings, setSettings] = useState<AppSettings>({
+  const [settings, setSettings] = useState<AppSettings>(saved.settings || {
     restaurantName: APP_CONFIG.restaurantName,
     adminName: APP_CONFIG.adminName,
     phone: APP_CONFIG.whatsappNumber,
     workingHours: APP_CONFIG.workingHours,
-    deliveryFee: 10,
+    deliveryFee: 15,
     crustStuffingPrice: 20,
     crustStuffingLabel: 'إضافة حشو أطراف؟',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', // Placeholder
+    videoUrl: 'https://youtu.be/G-GO2-j71JY?si=gNsFzRGCuQ7bzFGW', 
     musicUrl: '',
     tickerTexts: ['عروض خاصة على البيتزا الكبيرة!', 'جرب كريب لانجولتو المميز الآن', 'خصم 10% لأول طلب من التطبيق'],
     isMusicPlaying: false,
   });
 
-  // Persistence
-  useEffect(() => {
-    const savedData = localStorage.getItem(STORAGE_KEY);
-    if (savedData) {
-      const parsed = JSON.parse(savedData);
-      if (parsed.menu) setMenu(parsed.menu);
-      if (parsed.orders) setOrders(parsed.orders);
-      if (parsed.settings) setSettings(parsed.settings);
-      if (parsed.reviews) setReviews(parsed.reviews);
-      if (parsed.currentUser) setCurrentUser(parsed.currentUser);
-    }
+  const [darkMode, setDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      setDarkMode(true);
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
+    return savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
 
+  // تحديث الـ Class الخاص بالوضع الليلي فورياً
   useEffect(() => {
-    const dataToSave = { menu, orders, settings, reviews, currentUser };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    if (darkMode) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  }, [darkMode]);
+
+  // دالة الحفظ المركزية: يتم استدعاؤها عند أي تغيير في الحالات الأساسية
+  useEffect(() => {
+    const data = { menu, orders, settings, reviews, currentUser };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }, [menu, orders, settings, reviews, currentUser]);
 
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    if (!darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
+    setDarkMode(prev => {
+      const newVal = !prev;
+      localStorage.setItem('theme', newVal ? 'dark' : 'light');
+      return newVal;
+    });
   };
 
   const addToCart = (item: CartItem) => {
     setCart(prev => {
-      const existing = prev.find(i => i.menuItemId === item.menuItemId && i.size === item.size && i.crustStuffing === item.crustStuffing);
+      const existing = prev.find(i => 
+        i.menuItemId === item.menuItemId && 
+        i.size === item.size && 
+        i.crustStuffing === item.crustStuffing
+      );
       if (existing) {
         return prev.map(i => i === existing ? { ...i, quantity: i.quantity + item.quantity } : i);
       }
@@ -109,7 +116,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addOrder = (order: Order) => {
     setOrders(prev => [order, ...prev]);
-    // Reward points
     if (currentUser) {
       const earnedPoints = Math.floor(order.total / 100);
       setCurrentUser(prev => prev ? { ...prev, points: prev.points + earnedPoints } : null);

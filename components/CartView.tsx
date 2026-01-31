@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../AppContext';
-// Added ShoppingCart to the lucide-react imports to fix the error on line 68
 import { Trash2, Plus, Minus, Send, MapPin, Phone, CreditCard, ChevronRight, ShoppingCart } from 'lucide-react';
 import { Order } from '../types';
 
@@ -40,25 +39,39 @@ const CartView: React.FC<CartViewProps> = ({ onBackToMenu }) => {
 
     addOrder(newOrder);
 
-    // Build WhatsApp message
-    const itemsList = cart.map(i => `- ${i.name} x${i.quantity} (${i.price * i.quantity} ج.م)${i.crustStuffing ? ' (+حشو أطراف)' : ''}`).join('%0A');
-    const waMessage = `*طلب جديد من تطبيق لانجولتو*%0A` +
-      `*رقم الطلب:* ${orderId}%0A` +
-      `*الاسم:* ${currentUser.name}%0A` +
-      `*الموبايل:* ${currentUser.phone}%0A` +
-      `*العنوان:* ${address}%0A%0A` +
-      `*الأصناف:*%0A${itemsList}%0A%0A` +
-      `*المجموع:* ${subtotal} ج.م%0A` +
-      `*التوصيل:* ${settings.deliveryFee} ج.م%0A` +
-      `*الإجمالي:* ${total} ج.م%0A%0A` +
-      `*طريقة الدفع:* ${paymentMethod}`;
+    // بناء نص الرسالة بشكل منظم
+    const itemsText = cart.map(i => {
+      let detail = `• ${i.name} العدد(${i.quantity})`;
+      if (i.crustStuffing) detail += ` [محشو الأطراف]`;
+      detail += ` السعر: ${i.price * i.quantity} ج.م`;
+      return detail;
+    }).join('\n');
 
-    window.open(`https://wa.me/20${settings.phone}?text=${waMessage}`, '_blank');
+    const fullMessage = `*📦 طلب جديد من تطبيق لانجولتو*\n` +
+      `--------------------------\n` +
+      `*🔖 رقم الطلب:* ${orderId}\n` +
+      `*👤 العميل:* ${currentUser.name}\n` +
+      `*📞 الموبايل:* ${currentUser.phone}\n` +
+      `*📍 العنوان:* ${address}\n` +
+      `--------------------------\n` +
+      `*🍕 الأصناف:*\n${itemsText}\n` +
+      `--------------------------\n` +
+      `*💰 المجموع:* ${subtotal} ج.م\n` +
+      `*🚚 التوصيل:* ${settings.deliveryFee} ج.م\n` +
+      `*💳 الإجمالي:* ${total} ج.م\n` +
+      `*💵 الدفع:* ${paymentMethod}\n` +
+      `--------------------------\n` +
+      `_تم الطلب عبر التطبيق الرقمي_`;
+
+    // تشفير الرسالة بالكامل لحل مشكلة الرموز مثل # و المسافات
+    const encodedMessage = encodeURIComponent(fullMessage);
+    
+    // فتح الواتساب بالرسالة المشفرة
+    window.open(`https://wa.me/20${settings.phone}?text=${encodedMessage}`, '_blank');
     
     setTimeout(() => {
       clearCart();
       setIsOrdering(false);
-      alert('تم إرسال طلبك بنجاح! سيتم التواصل معك قريباً.');
     }, 1000);
   };
 
@@ -74,7 +87,7 @@ const CartView: React.FC<CartViewProps> = ({ onBackToMenu }) => {
         </div>
         <button 
           onClick={onBackToMenu}
-          className="px-8 py-3 bg-red-600 text-white rounded-full font-bold shadow-lg"
+          className="px-8 py-3 bg-red-600 text-white rounded-full font-bold shadow-lg transform active:scale-95 transition-all"
         >
           اذهب للمنيو
         </button>
@@ -83,7 +96,7 @@ const CartView: React.FC<CartViewProps> = ({ onBackToMenu }) => {
   }
 
   return (
-    <div className="grid lg:grid-cols-3 gap-8">
+    <div className="grid lg:grid-cols-3 gap-8 pb-10">
       <div className="lg:col-span-2 space-y-6">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           سلة المشتريات
@@ -94,15 +107,15 @@ const CartView: React.FC<CartViewProps> = ({ onBackToMenu }) => {
           {cart.map(item => (
             <div key={item.id} className="bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-700 flex items-center gap-4">
               <img 
-                src={`https://picsum.photos/seed/${item.menuItemId}/100/100`} 
+                src={item.menuItemId.startsWith('m') ? `https://picsum.photos/seed/${item.menuItemId}/100/100` : `https://images.unsplash.com/photo-1513104890138-7c749659a591?w=100&h=100&fit=crop`} 
                 alt={item.name}
                 className="w-20 h-20 rounded-2xl object-cover"
               />
               <div className="flex-1">
                 <h4 className="font-bold">{item.name}</h4>
                 <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                  {item.crustStuffing && <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">مع حشو أطراف</span>}
-                  <span>السعر: {item.price} ج.م</span>
+                  {item.crustStuffing && <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-bold">مع حشو أطراف</span>}
+                  <span>{item.price} ج.م</span>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <div className="flex items-center gap-3 bg-gray-50 dark:bg-slate-900 px-3 py-1 rounded-full border border-gray-200 dark:border-slate-700">
@@ -121,31 +134,30 @@ const CartView: React.FC<CartViewProps> = ({ onBackToMenu }) => {
       </div>
 
       <div className="space-y-6">
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-xl border border-gray-100 dark:border-slate-700 space-y-6">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-xl border border-gray-100 dark:border-slate-700 space-y-6 sticky top-20">
           <h3 className="text-lg font-bold border-b pb-4 dark:border-slate-700">تفاصيل الدفع والتوصيل</h3>
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-bold flex items-center gap-2"><MapPin size={16} /> عنوان التوصيل</label>
+              <label className="text-sm font-bold flex items-center gap-2"><MapPin size={16} className="text-red-600" /> عنوان التوصيل</label>
               <textarea 
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                className="w-full p-3 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none focus:ring-2 ring-red-600 text-sm h-20"
-                placeholder="أدخل عنوانك بالتفصيل (كفر بهيدة - شارع...)"
+                className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none focus:ring-2 ring-red-600 text-sm h-24"
+                placeholder="أدخل عنوانك بالتفصيل لسهولة الوصول إليك"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold flex items-center gap-2"><CreditCard size={16} /> طريقة الدفع</label>
+              <label className="text-sm font-bold flex items-center gap-2"><CreditCard size={16} className="text-red-600" /> طريقة الدفع</label>
               <select 
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full p-3 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none focus:ring-2 ring-red-600 text-sm"
+                className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none focus:ring-2 ring-red-600 text-sm font-bold"
               >
                 <option>نقدي عند الاستلام</option>
                 <option>فودافون كاش</option>
                 <option>إنستا باي</option>
-                <option>فيزا</option>
               </select>
             </div>
           </div>
@@ -153,11 +165,11 @@ const CartView: React.FC<CartViewProps> = ({ onBackToMenu }) => {
           <div className="space-y-2 pt-4 border-t dark:border-slate-700">
             <div className="flex justify-between text-gray-500">
               <span>المجموع الفرعي:</span>
-              <span>{subtotal} ج.م</span>
+              <span className="font-bold">{subtotal} ج.م</span>
             </div>
             <div className="flex justify-between text-gray-500">
               <span>رسوم التوصيل:</span>
-              <span>{settings.deliveryFee} ج.م</span>
+              <span className="font-bold">{settings.deliveryFee} ج.م</span>
             </div>
             <div className="flex justify-between text-xl font-black text-red-600 mt-2">
               <span>الإجمالي:</span>
@@ -168,10 +180,10 @@ const CartView: React.FC<CartViewProps> = ({ onBackToMenu }) => {
           <button 
             disabled={isOrdering}
             onClick={handleCheckout}
-            className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold text-lg shadow-xl shadow-red-600/30 flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-5 bg-red-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-red-600/30 flex items-center justify-center gap-3 disabled:opacity-50 transform active:scale-95 transition-all"
           >
             <Send size={20} />
-            {isOrdering ? 'جاري الطلب...' : 'تأكيد الطلب (واتساب)'}
+            {isOrdering ? 'جاري التحويل...' : 'تأكيد الطلب عبر واتساب'}
           </button>
         </div>
       </div>

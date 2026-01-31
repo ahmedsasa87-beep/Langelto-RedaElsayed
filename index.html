@@ -17,19 +17,67 @@
         background-color: #0f172a;
         color: #f1f5f9;
       }
-      @media print {
-        .no-print { display: none !important; }
-        .print-only { display: block !important; }
-      }
-      .print-only { display: none; }
       
-      /* Animation for ticker */
+      /* تحسينات الطباعة الاحترافية */
+      @media print {
+        /* إخفاء كل شيء بشكل افتراضي */
+        body * {
+          visibility: hidden !important;
+          background: none !important;
+        }
+        /* إظهار منطقة الفاتورة فقط */
+        #printable-receipt, #printable-receipt * {
+          visibility: visible !important;
+        }
+        #printable-receipt {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100% !important;
+          max-width: 80mm; /* عرض الطابعات الحرارية القياسي */
+          padding: 10px;
+          margin: 0;
+          display: block !important;
+          background: white !important;
+          color: black !important;
+        }
+        /* إزالة الهوامش التلقائية للمتصفح */
+        @page {
+          margin: 0;
+        }
+        .no-print {
+          display: none !important;
+        }
+      }
+
+      /* فئة لإخفاء العناصر برمجياً ولكن السماح بظهورها في الطباعة */
+      .print-only {
+        display: none;
+      }
+      @media print {
+        .print-only {
+          display: block !important;
+        }
+      }
+
+      /* انيميشن الشريط المتحرك */
       @keyframes ticker {
         0% { transform: translateX(100%); }
         100% { transform: translateX(-100%); }
       }
       .animate-ticker {
-        animation: ticker 20s linear infinite;
+        animation: ticker 25s linear infinite;
+      }
+      
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #e11d48;
+        border-radius: 10px;
       }
     </style>
   <script type="importmap">

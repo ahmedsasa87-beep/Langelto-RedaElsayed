@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { useApp } from '../AppContext';
 import { 
-  BarChart, LayoutDashboard, Pizza, ShoppingBag, Users, Settings, 
-  Plus, Search, Printer, Check, X, Edit2, Trash2, Tag, Trophy, FileText, Package, History, Image as ImageIcon, DollarSign, TrendingUp
+  LayoutDashboard, Pizza, ShoppingBag, Users, Settings, 
+  Printer, Check, Edit2, Trash2, Tag, Package, Image as ImageIcon, 
+  DollarSign, TrendingUp, Copy, Eye, X
 } from 'lucide-react';
 import { CategoryType, MenuItem, Order } from '../types';
 
@@ -21,13 +22,13 @@ const AdminPanel: React.FC = () => {
 
   if (!isLoggedIn) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 no-print">
         <div className="text-center">
           <div className="w-20 h-20 bg-red-600 rounded-full mx-auto mb-4 flex items-center justify-center text-white shadow-xl">
              <Settings size={40} />
           </div>
           <h2 className="text-3xl font-black">مدخل الإدارة</h2>
-          <p className="text-gray-500">يرجى إدخال كلمة المرور للمتابعة</p>
+          <p className="text-gray-500 font-bold">يرجى إدخال كلمة المرور للمتابعة</p>
         </div>
         <form onSubmit={handleLogin} className="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-xl w-full max-w-sm space-y-4 border border-gray-100 dark:border-slate-700">
           <input 
@@ -35,10 +36,10 @@ const AdminPanel: React.FC = () => {
             autoFocus
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700 focus:ring-2 focus:ring-red-600"
-            placeholder="كلمة المرور (admin)"
+            className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700 focus:ring-2 focus:ring-red-600 font-bold text-center"
+            placeholder="كلمة المرور"
           />
-          <button className="w-full py-4 bg-red-600 text-white rounded-2xl font-bold shadow-lg shadow-red-600/20 active:scale-95 transition-transform">
+          <button className="w-full py-4 bg-red-600 text-white rounded-2xl font-black shadow-lg hover:bg-red-700 transition-colors">
             دخول لوحة التحكم
           </button>
         </form>
@@ -47,7 +48,7 @@ const AdminPanel: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-8 pb-20 no-print">
       <div className="flex flex-col lg:flex-row gap-6 lg:items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-red-600 text-white rounded-2xl shadow-lg">
@@ -55,13 +56,13 @@ const AdminPanel: React.FC = () => {
           </div>
           <div>
             <h2 className="text-3xl font-black">لوحة التحكم</h2>
-            <p className="text-xs text-gray-500">إدارة مطعم لانجولتو بالكامل</p>
+            <p className="text-xs text-gray-500 font-bold">إدارة مطعم لانجولتو بالكامل</p>
           </div>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide bg-gray-100 dark:bg-slate-800/50 p-2 rounded-2xl">
           <SubTab icon={<ShoppingBag size={18} />} label="الطلبات" active={activeSubTab === 'orders'} onClick={() => setActiveSubTab('orders')} />
           <SubTab icon={<TrendingUp size={18} />} label="التقارير" active={activeSubTab === 'reports'} onClick={() => setActiveSubTab('reports')} />
-          <SubTab icon={<Printer size={18} />} label="طباعة الفواتير" active={activeSubTab === 'print'} onClick={() => setActiveSubTab('print')} />
+          <SubTab icon={<Printer size={18} />} label="الفواتير" active={activeSubTab === 'print'} onClick={() => setActiveSubTab('print')} />
           <SubTab icon={<Pizza size={18} />} label="المنيو" active={activeSubTab === 'menu'} onClick={() => setActiveSubTab('menu')} />
           <SubTab icon={<Tag size={18} />} label="الكوبونات" active={activeSubTab === 'coupons'} onClick={() => setActiveSubTab('coupons')} />
           <SubTab icon={<Package size={18} />} label="المخزون" active={activeSubTab === 'inventory'} onClick={() => setActiveSubTab('inventory')} />
@@ -84,6 +85,7 @@ const AdminPanel: React.FC = () => {
   );
 };
 
+// Shared SubTab component for the Admin Panel sidebar/top navigation
 const SubTab: React.FC<{ icon: React.ReactNode, label: string, active: boolean, onClick: () => void }> = ({ icon, label, active, onClick }) => (
   <button 
     onClick={onClick}
@@ -92,6 +94,194 @@ const SubTab: React.FC<{ icon: React.ReactNode, label: string, active: boolean, 
     {icon} {label}
   </button>
 );
+
+const InvoicePrinting: React.FC<{ orders: Order[] }> = ({ orders }) => {
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const handlePrint = (order: Order) => {
+    setSelectedOrder(order);
+    setTimeout(() => {
+      window.print();
+    }, 300);
+  };
+
+  const openPreview = (order: Order) => {
+    setSelectedOrder(order);
+    setIsPreviewOpen(true);
+  };
+
+  const copyToClipboard = (order: Order) => {
+    const text = `لانجولتو - طلب رقم ${order.id}\nالعميل: ${order.userName}\nالعنوان: ${order.userAddress}\n\nالأصناف:\n${order.items.map(i => `- ${i.name} x${i.quantity}`).join('\n')}\n\nالإجمالي: ${order.total} ج.م`;
+    navigator.clipboard.writeText(text);
+    alert('تم نسخ تفاصيل الطلب بنجاح!');
+  };
+
+  return (
+    <div className="space-y-6">
+      <h3 className="text-xl font-bold">نظام طباعة الفواتير</h3>
+
+      {/* منطقة الفاتورة المخفية للطباعة فقط */}
+      <div id="printable-receipt" className="print-only">
+        {selectedOrder && (
+          <div style={{ textAlign: 'center', fontFamily: 'monospace', direction: 'rtl', padding: '10px', background: 'white' }}>
+            <h2 style={{ margin: '5px 0' }}>لانجولتو - L'Angoletto</h2>
+            <p style={{ margin: '2px 0', fontSize: '12px' }}>إدارة رضا البغدي</p>
+            <p>--------------------------------</p>
+            <h3 style={{ margin: '10px 0' }}>رقم الطلب: {selectedOrder.id}</h3>
+            <p style={{ fontSize: '11px' }}>التاريخ: {new Date(selectedOrder.createdAt).toLocaleString('ar-EG')}</p>
+            <div style={{ textAlign: 'right', fontSize: '12px', marginTop: '10px' }}>
+              <p>👤 العميل: {selectedOrder.userName}</p>
+              <p>📞 الموبايل: {selectedOrder.userPhone}</p>
+              <p>📍 العنوان: {selectedOrder.userAddress}</p>
+            </div>
+            <p>--------------------------------</p>
+            <table style={{ width: '100%', textAlign: 'right', fontSize: '12px', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={{ borderBottom: '1px solid black', padding: '4px' }}>الصنف</th>
+                  <th style={{ borderBottom: '1px solid black', padding: '4px' }}>كم</th>
+                  <th style={{ borderBottom: '1px solid black', padding: '4px' }}>سعر</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedOrder.items.map((i, idx) => (
+                  <tr key={idx}>
+                    <td style={{ padding: '4px' }}>{i.name}</td>
+                    <td style={{ padding: '4px' }}>{i.quantity}</td>
+                    <td style={{ padding: '4px' }}>{i.price * i.quantity}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p>--------------------------------</p>
+            <div style={{ textAlign: 'left', fontSize: '13px' }}>
+              <p>المجموع: {selectedOrder.subtotal} ج.م</p>
+              <p>التوصيل: {selectedOrder.deliveryFee} ج.م</p>
+              <h2 style={{ border: '2px solid black', padding: '5px', marginTop: '10px', display: 'inline-block' }}>الإجمالي: {selectedOrder.total} ج.م</h2>
+            </div>
+            <p style={{ marginTop: '20px', fontSize: '10px' }}>شكراً لزيارتكم! نتمنى لكم وجبة شهية.</p>
+            <p style={{ fontSize: '9px', opacity: 0.7 }}>Powered by Mahmoud Hassan</p>
+          </div>
+        )}
+      </div>
+
+      {/* مودال معاينة الفاتورة قبل الطباعة */}
+      {isPreviewOpen && selectedOrder && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 no-print">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-800">
+              <h4 className="font-bold flex items-center gap-2"><Eye size={18} /> معاينة الفاتورة</h4>
+              <button onClick={() => setIsPreviewOpen(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-8 overflow-y-auto max-h-[70vh] bg-white text-black">
+              {/* نفس شكل الفاتورة المطبوعة للمعاينة */}
+              <div className="text-center font-mono" dir="rtl">
+                <h2 className="text-xl font-black">لانجولتو - L'Angoletto</h2>
+                <p className="text-xs">إدارة رضا البغدي</p>
+                <div className="my-4 border-t border-dashed border-gray-300" />
+                <h3 className="text-lg font-bold">رقم الطلب: {selectedOrder.id}</h3>
+                <p className="text-[10px] text-gray-500">{new Date(selectedOrder.createdAt).toLocaleString('ar-EG')}</p>
+                
+                <div className="text-right text-xs mt-4 space-y-1">
+                  <p>👤 العميل: {selectedOrder.userName}</p>
+                  <p>📞 الموبايل: {selectedOrder.userPhone}</p>
+                  <p>📍 العنوان: {selectedOrder.userAddress}</p>
+                </div>
+                
+                <div className="my-4 border-t border-dashed border-gray-300" />
+                
+                <table className="w-full text-right text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-300">
+                      <th className="py-2">الصنف</th>
+                      <th className="py-2">كم</th>
+                      <th className="py-2">سعر</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedOrder.items.map((i, idx) => (
+                      <tr key={idx} className="border-b border-gray-100">
+                        <td className="py-2">{i.name}</td>
+                        <td className="py-2">{i.quantity}</td>
+                        <td className="py-2">{i.price * i.quantity}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                
+                <div className="mt-4 text-left space-y-1 text-sm">
+                  <p>المجموع: {selectedOrder.subtotal} ج.م</p>
+                  <p>التوصيل: {selectedOrder.deliveryFee} ج.م</p>
+                  <div className="mt-2 inline-block border-2 border-black px-4 py-2 font-black text-lg">
+                    الإجمالي: {selectedOrder.total} ج.م
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-gray-50 dark:bg-slate-800 border-t dark:border-slate-800 flex gap-3">
+              <button 
+                onClick={() => handlePrint(selectedOrder)}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-red-600/20 active:scale-95 transition-transform"
+              >
+                <Printer size={18} /> طباعة الفاتورة
+              </button>
+              <button 
+                onClick={() => copyToClipboard(selectedOrder)}
+                className="px-6 py-3 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-200 border dark:border-slate-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors"
+              >
+                <Copy size={18} /> نسخ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 no-print">
+        {orders.length === 0 ? (
+          <div className="col-span-full py-20 text-center text-gray-400 font-bold bg-gray-50 dark:bg-slate-900 rounded-[40px]">
+            لا توجد طلبات في السجل حالياً
+          </div>
+        ) : orders.map(order => (
+          <div key={order.id} className="p-6 bg-gray-50 dark:bg-slate-900 rounded-[40px] border border-gray-200 dark:border-slate-800 space-y-4 hover:border-red-600 transition-all group">
+            <div className="flex justify-between font-black items-start">
+              <div>
+                <span className="text-red-600 block text-xs">رقم الطلب</span>
+                <span className="text-xl">#{order.id.replace('#', '')}</span>
+              </div>
+              <div className="text-right">
+                <span className="text-gray-500 block text-[10px] font-bold">{new Date(order.createdAt).toLocaleDateString('ar-EG')}</span>
+                <span className="text-lg text-green-600 font-black">{order.total} ج.م</span>
+              </div>
+            </div>
+            
+            <div className="bg-white dark:bg-slate-800 p-3 rounded-2xl text-xs space-y-1 border border-gray-100 dark:border-slate-700">
+               <p className="font-bold flex items-center gap-2">👤 {order.userName}</p>
+               <p className="text-gray-500">📍 {order.userAddress}</p>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button 
+                onClick={() => openPreview(order)}
+                className="flex-1 py-3 bg-white dark:bg-slate-800 text-blue-600 rounded-2xl text-xs font-black border-2 border-blue-50 dark:border-slate-700 flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+              >
+                <Eye size={16} /> فتح ومعاينة
+              </button>
+              <button 
+                onClick={() => handlePrint(order)}
+                className="flex-1 py-3 bg-red-600 text-white rounded-2xl text-xs font-black shadow-lg shadow-red-600/20 flex items-center justify-center gap-2 hover:bg-red-700 transition-all active:scale-95"
+              >
+                <Printer size={16} /> طباعة سريعة
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const ReportsManager: React.FC<{ orders: Order[] }> = ({ orders }) => {
   const totalSales = orders.filter(o => o.status === 'delivered').reduce((acc, o) => acc + o.total, 0);
@@ -105,166 +295,25 @@ const ReportsManager: React.FC<{ orders: Order[] }> = ({ orders }) => {
         <div className="bg-green-50 dark:bg-green-900/10 p-6 rounded-3xl border border-green-100 dark:border-green-900/30">
           <div className="text-green-600 mb-2"><DollarSign size={32} /></div>
           <div className="text-2xl font-black">{totalSales} ج.م</div>
-          <div className="text-xs text-green-700 dark:text-green-400">إجمالي المبيعات المحصلة</div>
+          <div className="text-xs text-green-700 dark:text-green-400 font-bold">مبيعات محصلة</div>
         </div>
         <div className="bg-yellow-50 dark:bg-yellow-900/10 p-6 rounded-3xl border border-yellow-100 dark:border-yellow-900/30">
           <div className="text-yellow-600 mb-2"><TrendingUp size={32} /></div>
           <div className="text-2xl font-black">{pendingSales} ج.م</div>
-          <div className="text-xs text-yellow-700 dark:text-yellow-400">مبيعات قيد التنفيذ</div>
+          <div className="text-xs text-yellow-700 dark:text-yellow-400 font-bold">قيد التنفيذ</div>
         </div>
         <div className="bg-blue-50 dark:bg-blue-900/10 p-6 rounded-3xl border border-blue-100 dark:border-blue-900/30">
           <div className="text-blue-600 mb-2"><ShoppingBag size={32} /></div>
           <div className="text-2xl font-black">{totalOrders}</div>
-          <div className="text-xs text-blue-700 dark:text-blue-400">عدد الطلبات الإجمالي</div>
-        </div>
-      </div>
-      
-      <div className="space-y-4">
-        <h4 className="font-bold">أكثر الأصناف طلباً</h4>
-        <div className="grid gap-2">
-           {[1,2,3].map(i => (
-             <div key={i} className="flex items-center justify-between bg-gray-50 dark:bg-slate-900 p-3 rounded-2xl">
-               <span className="text-sm font-bold">صنف مميز #{i}</span>
-               <span className="text-xs text-gray-400">100 طلب</span>
-             </div>
-           ))}
+          <div className="text-xs text-blue-700 dark:text-blue-400 font-bold">عدد الطلبات</div>
         </div>
       </div>
     </div>
   );
 };
-
-const CouponsManager: React.FC = () => {
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-xl font-bold">إدارة الكوبونات</h3>
-        <button className="bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-red-600/20">
-          <Plus size={16} /> إضافة كوبون جديد
-        </button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {['SAVE20', 'LANGOLETTO10'].map(code => (
-          <div key={code} className="p-6 bg-gray-50 dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-slate-700 flex flex-col items-center gap-2">
-            <div className="bg-white dark:bg-slate-800 px-4 py-1 rounded-full text-lg font-black tracking-widest text-red-600 shadow-sm">{code}</div>
-            <div className="text-xs text-gray-500">خصم 20% | صالح حتى 2024-12-30</div>
-            <div className="flex gap-2 mt-4">
-              <button className="p-2 bg-blue-50 text-blue-600 rounded-xl"><Edit2 size={16} /></button>
-              <button className="p-2 bg-red-50 text-red-600 rounded-xl"><Trash2 size={16} /></button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const OrdersManager: React.FC<{ orders: Order[], updateStatus: (id: string, s: any) => void }> = ({ orders, updateStatus }) => (
-  <div className="space-y-4">
-    <div className="flex justify-between items-center mb-6">
-      <h3 className="text-xl font-bold">إدارة الطلبات الحالية</h3>
-      <div className="flex gap-2">
-        <button className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-sm font-bold border border-blue-200" onClick={() => window.print()}>
-          <FileText size={16} /> طباعة التقرير اليومي
-        </button>
-      </div>
-    </div>
-    <div className="overflow-x-auto">
-      <table className="w-full text-right text-sm">
-        <thead className="bg-gray-50 dark:bg-slate-900 border-b border-gray-100 dark:border-slate-700">
-          <tr>
-            <th className="p-4 rounded-r-2xl">رقم الطلب</th>
-            <th className="p-4">العميل</th>
-            <th className="p-4">العنوان</th>
-            <th className="p-4">الإجمالي</th>
-            <th className="p-4">الحالة</th>
-            <th className="p-4 rounded-l-2xl text-center">الإجراءات</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
-          {orders.length === 0 ? (
-            <tr><td colSpan={6} className="text-center py-20 text-gray-400 font-bold">لا توجد طلبات لعرضها حالياً</td></tr>
-          ) : orders.map(o => (
-            <tr key={o.id} className="hover:bg-gray-50 dark:hover:bg-slate-900/50 transition-colors group">
-              <td className="p-4 font-bold">{o.id}</td>
-              <td className="p-4">
-                <div className="font-bold">{o.userName}</div>
-                <div className="text-[10px] text-gray-400">{o.userPhone}</div>
-              </td>
-              <td className="p-4 max-w-[200px] truncate text-xs text-gray-500">{o.userAddress}</td>
-              <td className="p-4 font-bold text-red-600">{o.total} ج.م</td>
-              <td className="p-4">
-                <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
-                  o.status === 'delivered' ? 'bg-green-100 text-green-600' : 
-                  o.status === 'pending' ? 'bg-yellow-100 text-yellow-600' : 'bg-blue-100 text-blue-600'
-                }`}>
-                  {o.status === 'pending' ? 'قيد الانتظار' : o.status === 'preparing' ? 'جاري التحضير' : 'تم التوصيل'}
-                </span>
-              </td>
-              <td className="p-4">
-                <div className="flex justify-center gap-2">
-                  <button onClick={() => updateStatus(o.id, 'preparing')} className="p-2 bg-blue-50 text-blue-600 rounded-lg" title="جاري التحضير"><Edit2 size={16} /></button>
-                  <button onClick={() => updateStatus(o.id, 'delivered')} className="p-2 bg-green-50 text-green-600 rounded-lg" title="تم التوصيل"><Check size={16} /></button>
-                  <button className="p-2 bg-gray-100 text-gray-600 rounded-lg opacity-50 group-hover:opacity-100 transition-opacity"><Printer size={16} /></button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
-
-const InvoicePrinting: React.FC<{ orders: Order[] }> = ({ orders }) => (
-  <div className="space-y-6">
-    <div className="flex justify-between items-center">
-      <h3 className="text-xl font-bold">طباعة الفواتير</h3>
-      <div className="text-xs text-gray-500 italic">يمكنك طباعة الفاتورة أو تصديرها كـ PDF/JPG</div>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {orders.length === 0 ? <p className="col-span-full text-center py-20 text-gray-400">لا توجد طلبات للطباعة</p> : orders.map(order => (
-        <div key={order.id} className="bg-gray-50 dark:bg-slate-900 p-6 rounded-3xl border-2 border-dashed border-gray-300 dark:border-slate-700 space-y-4 shadow-sm">
-          <div className="flex justify-between items-start border-b border-dashed border-gray-400 pb-2">
-            <div className="text-xs font-black text-red-600 uppercase">لانجولتو L'Angoletto</div>
-            <div className="text-[10px] text-gray-500">{new Date(order.createdAt).toLocaleString('ar-EG')}</div>
-          </div>
-          <div className="text-center space-y-1">
-            <h4 className="font-black text-xl">طلب {order.id}</h4>
-            <p className="text-sm font-bold">{order.userName}</p>
-            <p className="text-[10px] text-gray-400">{order.userPhone}</p>
-          </div>
-          <div className="space-y-2 py-4 border-b border-dashed border-gray-300">
-            {order.items.map((item, idx) => (
-              <div key={idx} className="flex justify-between text-xs font-medium">
-                <span>{item.name} x{item.quantity}</span>
-                <span>{item.price * item.quantity} ج.م</span>
-              </div>
-            ))}
-          </div>
-          <div className="space-y-1 text-xs text-gray-500">
-             <div className="flex justify-between"><span>المجموع:</span><span>{order.subtotal} ج.م</span></div>
-             <div className="flex justify-between"><span>التوصيل:</span><span>{order.deliveryFee} ج.م</span></div>
-          </div>
-          <div className="pt-2 font-black text-lg flex justify-between text-red-600">
-            <span>الإجمالي</span>
-            <span>{order.total} ج.م</span>
-          </div>
-          <div className="flex gap-2 pt-4 no-print">
-            <button onClick={() => window.print()} className="flex-1 py-3 bg-white dark:bg-slate-800 text-red-600 rounded-xl text-xs font-black border-2 border-red-600 flex items-center justify-center gap-1 hover:bg-red-50">
-              <Printer size={16} /> طباعة
-            </button>
-            <button className="flex-1 py-3 bg-red-600 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1 shadow-lg shadow-red-600/20 active:scale-95 transition-transform">
-              <ImageIcon size={16} /> صورة
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
 
 const MenuManager: React.FC<{ menu: MenuItem[], setMenu: any }> = ({ menu, setMenu }) => {
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [newItemName, setNewItemName] = useState('');
   const [newItemCat, setNewItemCat] = useState(CategoryType.PIZZA);
   const [newItemImg, setNewItemImg] = useState('');
@@ -283,71 +332,99 @@ const MenuManager: React.FC<{ menu: MenuItem[], setMenu: any }> = ({ menu, setMe
     setNewItemImg('');
   };
 
-  const updateItemImage = (id: string, newUrl: string) => {
-    setMenu(menu.map(m => m.id === id ? { ...m, image: newUrl } : m));
+  const handleEditSave = () => {
+    if (!editingItem) return;
+    setMenu(menu.map(m => m.id === editingItem.id ? editingItem : m));
+    setEditingItem(null);
   };
 
   return (
     <div className="space-y-8">
-      <div className="p-8 bg-red-50 dark:bg-red-900/10 rounded-[40px] border border-red-100 dark:border-red-900/30 shadow-inner">
-        <h4 className="text-xl font-black mb-6 flex items-center gap-2"><Plus size={24} className="text-red-600" /> إضافة صنف جديد</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="space-y-2">
-            <label className="text-xs font-black text-gray-500 uppercase tracking-wider">اسم الصنف</label>
-            <input 
-              value={newItemName} 
-              onChange={e => setNewItemName(e.target.value)} 
-              className="w-full p-4 rounded-2xl bg-white dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700 font-bold focus:ring-2 focus:ring-red-600" 
-              placeholder="مثال: بيتزا سلامي"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-black text-gray-500 uppercase tracking-wider">القسم</label>
-            <select value={newItemCat} onChange={e => setNewItemCat(e.target.value as any)} className="w-full p-4 rounded-2xl bg-white dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700 font-bold focus:ring-2 focus:ring-red-600">
-              {Object.values(CategoryType).map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-black text-gray-500 uppercase tracking-wider">رابط الصورة (URL)</label>
-            <div className="relative">
-               <ImageIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-               <input 
-                value={newItemImg} 
-                onChange={e => setNewItemImg(e.target.value)} 
-                className="w-full p-4 pl-12 rounded-2xl bg-white dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700 text-xs focus:ring-2 focus:ring-red-600" 
-                placeholder="https://..."
-              />
+      {editingItem && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md no-print">
+          <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-[40px] p-8 space-y-6 shadow-2xl">
+            <h3 className="text-2xl font-black">تعديل: {editingItem.name}</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500">سعر الصغير (S)</label>
+                <input type="number" value={editingItem.priceS || 0} onChange={e => setEditingItem({...editingItem, priceS: Number(e.target.value)})} className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500">سعر الوسط (M)</label>
+                <input type="number" value={editingItem.priceM || 0} onChange={e => setEditingItem({...editingItem, priceM: Number(e.target.value)})} className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500">سعر الكبير (L)</label>
+                <input type="number" value={editingItem.priceL || 0} onChange={e => setEditingItem({...editingItem, priceL: Number(e.target.value)})} className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-500">السعر الثابت</label>
+                <input type="number" value={editingItem.priceDefault || 0} onChange={e => setEditingItem({...editingItem, priceDefault: Number(e.target.value)})} className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-500">رابط الصورة</label>
+              <input value={editingItem.image || ''} onChange={e => setEditingItem({...editingItem, image: e.target.value})} className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700" />
+            </div>
+            <div className="flex gap-4">
+               <button onClick={handleEditSave} className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black shadow-lg shadow-red-600/20 active:scale-95 transition-all">حفظ التغييرات</button>
+               <button onClick={() => setEditingItem(null)} className="flex-1 py-4 bg-gray-100 dark:bg-slate-700 rounded-2xl font-black">إلغاء</button>
             </div>
           </div>
-          <div className="flex items-end">
-            <button onClick={addItem} className="w-full py-4 bg-red-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-red-600/30 active:scale-95 transition-transform flex items-center justify-center gap-2">
-              <Plus size={20} /> حفظ الصنف
-            </button>
-          </div>
+        </div>
+      )}
+
+      <div className="p-8 bg-red-50 dark:bg-red-900/10 rounded-[40px] border border-red-100 dark:border-red-900/30">
+        <h4 className="text-xl font-black mb-6">إضافة صنف جديد</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <input 
+            value={newItemName} 
+            onChange={e => setNewItemName(e.target.value)} 
+            className="p-4 rounded-2xl bg-white dark:bg-slate-900 font-bold text-sm border-none ring-1 ring-gray-100 dark:ring-slate-800" 
+            placeholder="اسم الصنف"
+          />
+          <select value={newItemCat} onChange={e => setNewItemCat(e.target.value as any)} className="p-4 rounded-2xl bg-white dark:bg-slate-900 font-bold text-sm border-none ring-1 ring-gray-100 dark:ring-slate-800">
+            {Object.values(CategoryType).map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <input 
+            value={newItemImg} 
+            onChange={e => setNewItemImg(e.target.value)} 
+            className="p-4 rounded-2xl bg-white dark:bg-slate-900 text-xs border-none ring-1 ring-gray-100 dark:ring-slate-800" 
+            placeholder="رابط الصورة (Unsplash/ImgBB)"
+          />
+          <button onClick={addItem} className="py-4 bg-red-600 text-white rounded-2xl font-black shadow-lg shadow-red-600/20 transform active:scale-95 transition-all">إضافة للمنيو</button>
         </div>
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {menu.map(item => (
-          <div key={item.id} className="p-4 bg-gray-50 dark:bg-slate-900 rounded-[30px] border border-gray-100 dark:border-slate-700 group hover:border-red-600/50 transition-all">
-            <div className="flex gap-4 items-center">
-               <div className="w-24 h-24 rounded-2xl overflow-hidden border border-gray-200 dark:border-slate-800 flex-shrink-0 relative group/img">
-                  <img src={item.image} className="w-full h-full object-cover transition-transform group-hover/img:scale-110" alt={item.name} />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
-                     <button className="text-white bg-red-600 p-2 rounded-full shadow-lg" onClick={() => {
-                       const url = prompt('أدخل رابط الصورة الجديد:', item.image);
-                       if(url) updateItemImage(item.id, url);
-                     }}><ImageIcon size={16} /></button>
-                  </div>
-               </div>
-               <div className="flex-1 space-y-1">
-                <h4 className="font-black text-sm">{item.name}</h4>
-                <p className="text-[10px] text-gray-500 font-bold bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-full inline-block">{item.category}</p>
-                <div className="text-[10px] text-red-600 font-black">{item.priceS || item.priceDefault} ج.م</div>
+          <div key={item.id} className="p-4 bg-gray-50 dark:bg-slate-900 rounded-[40px] border border-gray-100 dark:border-slate-800 flex flex-col gap-4 group">
+            <div className="relative h-48 rounded-[30px] overflow-hidden shadow-inner">
+              <img src={item.image} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt={item.name} />
+              <div className="absolute top-3 right-3 flex gap-2">
+                <button 
+                  onClick={() => setEditingItem(item)}
+                  className="bg-white/90 p-2.5 rounded-full text-blue-600 shadow-xl hover:scale-110 transition-all"
+                  title="تعديل تفصيلي"
+                >
+                  <Edit2 size={18} />
+                </button>
+                <button 
+                  onClick={() => { if(confirm('هل أنت متأكد من الحذف؟')) setMenu(menu.filter(m => m.id !== item.id)) }}
+                  className="bg-white/90 p-2.5 rounded-full text-red-600 shadow-xl hover:scale-110 transition-all"
+                >
+                  <Trash2 size={18} />
+                </button>
               </div>
-              <div className="flex flex-col gap-1">
-                <button className="text-blue-600 p-2 hover:bg-blue-50 rounded-xl transition-colors"><Edit2 size={16} /></button>
-                <button onClick={() => setMenu(menu.filter(m => m.id !== item.id))} className="text-red-600 p-2 hover:bg-red-50 rounded-xl transition-colors"><Trash2 size={16} /></button>
+            </div>
+            <div className="px-2 space-y-1 pb-2">
+              <h4 className="font-black text-lg">{item.name}</h4>
+              <p className="text-xs text-gray-500 font-bold">{item.category}</p>
+              <div className="flex flex-wrap gap-2 text-[10px] font-black text-red-600 mt-2">
+                {item.priceS && <span className="bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg border border-red-100 dark:border-red-900/30">S: {item.priceS}</span>}
+                {item.priceM && <span className="bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg border border-red-100 dark:border-red-900/30">M: {item.priceM}</span>}
+                {item.priceL && <span className="bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg border border-red-100 dark:border-red-900/30">L: {item.priceL}</span>}
+                {item.priceDefault && <span className="bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg border border-red-100 dark:border-red-900/30">السعر: {item.priceDefault}</span>}
               </div>
             </div>
           </div>
@@ -357,39 +434,38 @@ const MenuManager: React.FC<{ menu: MenuItem[], setMenu: any }> = ({ menu, setMe
   );
 };
 
-const InventoryManager: React.FC = () => (
-  <div className="space-y-6">
-    <div className="flex justify-between items-center">
-      <h3 className="text-xl font-bold">سجل المشتريات والمخزون</h3>
-      <button className="bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2">
-        <Plus size={16} /> إضافة مشتريات
-      </button>
-    </div>
-    <div className="overflow-x-auto rounded-3xl border border-gray-100 dark:border-slate-700">
+const OrdersManager: React.FC<{ orders: Order[], updateStatus: (id: string, s: any) => void }> = ({ orders, updateStatus }) => (
+  <div className="space-y-4">
+    <h3 className="text-xl font-bold">إدارة الطلبات الواردة</h3>
+    <div className="overflow-x-auto rounded-[30px] border border-gray-100 dark:border-slate-800">
       <table className="w-full text-right text-sm">
-        <thead className="bg-gray-50 dark:bg-slate-900 border-b">
+        <thead className="bg-gray-50 dark:bg-slate-900 border-b dark:border-slate-800">
           <tr>
-            <th className="p-4 font-black uppercase tracking-wider">الصنف</th>
-            <th className="p-4 font-black uppercase tracking-wider">الكمية</th>
-            <th className="p-4 font-black uppercase tracking-wider">تاريخ الشراء</th>
-            <th className="p-4 font-black uppercase tracking-wider">تاريخ الانتهاء</th>
-            <th className="p-4 font-black uppercase tracking-wider">الإجراء</th>
+            <th className="p-4 font-black">رقم الطلب</th>
+            <th className="p-4 font-black">العميل</th>
+            <th className="p-4 font-black">المجموع</th>
+            <th className="p-4 font-black text-center">الحالة</th>
+            <th className="p-4 font-black text-center">إجراءات</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
-          {[
-            { name: 'دقيق فاخر', qty: '50 كجم', date: '2023-10-20', expiry: '2024-04-20' },
-            { name: 'جبنة موتزاريلا', qty: '20 كجم', date: '2023-10-22', expiry: '2023-12-22' },
-            { name: 'صوص طماطم', qty: '10 جالون', date: '2023-10-21', expiry: '2024-01-21' },
-          ].map((item, i) => (
-            <tr key={i} className="hover:bg-gray-50 dark:hover:bg-slate-900/50 transition-colors">
-              <td className="p-4 font-bold">{item.name}</td>
-              <td className="p-4 font-medium">{item.qty}</td>
-              <td className="p-4 text-xs text-gray-500">{item.date}</td>
+        <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
+          {orders.map(o => (
+            <tr key={o.id} className="hover:bg-gray-50 dark:hover:bg-slate-900/50 transition-colors">
+              <td className="p-4 font-bold">{o.id}</td>
               <td className="p-4">
-                <span className="text-xs text-orange-600 font-black px-2 py-1 bg-orange-50 dark:bg-orange-900/20 rounded-full">{item.expiry}</span>
+                 <div className="font-bold">{o.userName}</div>
+                 <div className="text-[10px] text-gray-500">{o.userPhone}</div>
               </td>
-              <td className="p-4"><Trash2 size={16} className="text-gray-300 hover:text-red-600 cursor-pointer transition-colors" /></td>
+              <td className="p-4 font-black text-red-600">{o.total} ج.م</td>
+              <td className="p-4 text-center">
+                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black ${o.status === 'delivered' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
+                  {o.status === 'pending' ? 'بانتظار التأكيد' : o.status === 'preparing' ? 'قيد التحضير' : 'تم التسليم'}
+                </span>
+              </td>
+              <td className="p-4 flex justify-center gap-2">
+                <button onClick={() => updateStatus(o.id, 'preparing')} className="p-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="تحضير"><Edit2 size={16} /></button>
+                <button onClick={() => updateStatus(o.id, 'delivered')} className="p-2.5 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all shadow-sm" title="تم"><Check size={16} /></button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -398,104 +474,34 @@ const InventoryManager: React.FC = () => (
   </div>
 );
 
-const UsersManager: React.FC = () => (
-  <div className="space-y-6">
-    <h3 className="text-xl font-bold">إدارة العملاء والولاء</h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {[
-        { name: 'محمود حسن', phone: '01012345678', points: 120, orders: 15 },
-        { name: 'أحمد علي', phone: '01298765432', points: 45, orders: 4 },
-        { name: 'سارة محمد', phone: '01122334455', points: 80, orders: 9 },
-      ].map((user, i) => (
-        <div key={i} className="p-6 bg-gray-50 dark:bg-slate-900 rounded-[30px] flex items-center justify-between border border-gray-100 dark:border-slate-800">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-600 to-orange-500 text-white flex items-center justify-center font-black text-xl shadow-lg">{user.name[0]}</div>
-            <div>
-              <div className="font-black text-base">{user.name}</div>
-              <div className="text-xs text-gray-400 font-bold">{user.phone}</div>
-            </div>
-          </div>
-          <div className="text-left space-y-1">
-            <div className="text-xs bg-orange-100 text-orange-600 px-3 py-1 rounded-full font-black border border-orange-200">{user.points} نقطة</div>
-            <div className="text-[10px] text-gray-400 font-bold">{user.orders} طلب سابق</div>
-          </div>
-          <div className="flex gap-2 mr-4">
-            <button className="text-blue-600 p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700" title="سجل الطلبات"><History size={16} /></button>
-            <button className="text-red-600 p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700" title="حظر العميل"><X size={16} /></button>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
+const InventoryManager = () => <div className="text-center py-20 text-gray-400 font-bold bg-gray-50 dark:bg-slate-900 rounded-[40px]">جاري تطوير نظام المخزون الرقمي...</div>;
+const UsersManager = () => <div className="text-center py-20 text-gray-400 font-bold bg-gray-50 dark:bg-slate-900 rounded-[40px]">جاري تطوير سجل العملاء وتحليل البيانات...</div>;
+const CouponsManager = () => <div className="text-center py-20 text-gray-400 font-bold bg-gray-50 dark:bg-slate-900 rounded-[40px]">جاري تطوير نظام الكوبونات والخصومات...</div>;
 
 const SettingsManager: React.FC<{ settings: any, updateSettings: any }> = ({ settings, updateSettings }) => (
-  <div className="space-y-10">
-    <div className="grid md:grid-cols-2 gap-10">
-      <div className="space-y-8">
-        <h4 className="font-black text-red-600 border-r-4 border-red-600 pr-3 flex items-center gap-2"><Settings size={20} /> إعدادات المتجر الأساسية</h4>
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-xs font-black text-gray-400 uppercase tracking-widest">رسوم التوصيل الافتراضية</label>
-            <div className="relative">
-               <DollarSign size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
-               <input 
-                type="number" 
-                value={settings.deliveryFee} 
-                onChange={(e) => updateSettings({ deliveryFee: Number(e.target.value) })}
-                className="w-full p-4 pr-12 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700 font-black focus:ring-2 focus:ring-red-600" 
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-black text-gray-400 uppercase tracking-widest">سعر حشو الأطراف (بيتزا)</label>
-            <input 
-              type="number" 
-              value={settings.crustStuffingPrice} 
-              onChange={(e) => updateSettings({ crustStuffingPrice: Number(e.target.value) })}
-              className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700 font-black focus:ring-2 focus:ring-red-600" 
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-black text-gray-400 uppercase tracking-widest">رقم الواتساب للاستلام</label>
-            <input 
-              value={settings.phone} 
-              onChange={(e) => updateSettings({ phone: e.target.value })}
-              className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700 font-black focus:ring-2 focus:ring-red-600" 
-              placeholder="01xxxxxxxxx"
-            />
-          </div>
+  <div className="grid md:grid-cols-2 gap-10">
+    <div className="space-y-6">
+      <h4 className="font-black border-r-4 border-red-600 pr-3">الإعدادات التشغيلية</h4>
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-gray-500">رسوم التوصيل (ج.م)</label>
+          <input type="number" value={settings.deliveryFee} onChange={e => updateSettings({ deliveryFee: Number(e.target.value) })} className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 ring-1 ring-gray-100 dark:ring-slate-800 border-none font-black" />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-gray-500">رقم واتساب المطعم (للاستقبال)</label>
+          <input value={settings.phone} onChange={e => updateSettings({ phone: e.target.value })} className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 ring-1 ring-gray-100 dark:ring-slate-800 border-none font-bold" />
         </div>
       </div>
-      <div className="space-y-8">
-        <h4 className="font-black text-blue-600 border-r-4 border-blue-600 pr-3 flex items-center gap-2"><ImageIcon size={20} /> إعدادات الميديا والعروض</h4>
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-xs font-black text-gray-400 uppercase tracking-widest">رابط فيديو اليوتيوب (الرئيسية)</label>
-            <input 
-              value={settings.videoUrl} 
-              onChange={(e) => updateSettings({ videoUrl: e.target.value })}
-              className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700 text-xs focus:ring-2 focus:ring-red-600" 
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-black text-gray-400 uppercase tracking-widest">مواعيد العمل</label>
-            <input 
-              value={settings.workingHours} 
-              onChange={(e) => updateSettings({ workingHours: e.target.value })}
-              className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700 font-bold focus:ring-2 focus:ring-red-600" 
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-black text-gray-400 uppercase tracking-widest">شريط العروض (نص متحرك)</label>
-            <textarea 
-              value={settings.tickerTexts.join(', ')} 
-              onChange={(e) => updateSettings({ tickerTexts: e.target.value.split(',').map(s => s.trim()) })}
-              className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 border-none ring-1 ring-gray-200 dark:ring-slate-700 h-32 font-medium focus:ring-2 focus:ring-red-600" 
-              placeholder="افصل بين العروض بفاصلة (,)"
-            />
-          </div>
-        </div>
+    </div>
+    <div className="space-y-6">
+      <h4 className="font-black border-r-4 border-blue-600 pr-3">المحتوى التفاعلي</h4>
+      <div className="space-y-1">
+        <label className="text-xs font-bold text-gray-500">رابط الفيديو في الصفحة الرئيسية</label>
+        <input value={settings.videoUrl} onChange={e => updateSettings({ videoUrl: e.target.value })} className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 ring-1 ring-gray-100 dark:ring-slate-800 border-none font-medium" placeholder="https://youtu.be/..." />
+      </div>
+      <div className="space-y-1">
+        <label className="text-xs font-bold text-gray-500">شريط العروض (افصل بين العروض بفاصلة)</label>
+        <textarea value={settings.tickerTexts.join(', ')} onChange={e => updateSettings({ tickerTexts: e.target.value.split(',').map(s => s.trim()) })} className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-slate-900 h-24 ring-1 ring-gray-100 dark:ring-slate-800 border-none font-medium" />
       </div>
     </div>
   </div>
